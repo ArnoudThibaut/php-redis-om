@@ -13,15 +13,12 @@ use Talleu\RedisOm\Om\Mapping\Id;
 use Talleu\RedisOm\Om\Mapping\Property;
 use Talleu\RedisOm\Om\RedisFormat;
 use Talleu\RedisOm\Om\RedisObjectManager;
+use Talleu\RedisOm\Om\RedisObjectManagerInterface;
 
 final class GenerateSchema
 {
-    public static function generateSchema(string $dir): void
+    public static function generateSchema(string $dir, RedisObjectManagerInterface $manager): void
     {
-        $redisOm = new RedisObjectManager(
-            getenv('REDIS_CLIENT') === 'predis' ? new PredisClient() : new RedisClient(),
-        );
-
         $rii = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir));
         $phpFiles = [];
 
@@ -53,7 +50,7 @@ final class GenerateSchema
 
             /** @var Entity $entity */
             $entity = $attributes[0]->newInstance();
-            $redisOm->dropIndex($entity, $fqcn);
+            $manager->dropIndex($entity, $fqcn);
             $format = $entity->format ?? RedisFormat::HASH->value;
 
             $idExist = false;
@@ -156,7 +153,7 @@ final class GenerateSchema
             if (!$idExist) {
                 throw new BadIdentifierConfigurationException("No identifier found for $fqcn, or identifier is not mapped by RedisOm");
             }
-            $redisOm->createIndex($entity, $fqcn, $propertiesToIndex);
+            $manager->createIndex($entity, $fqcn, $propertiesToIndex);
         }
     }
 

@@ -13,23 +13,21 @@ use Talleu\RedisOm\Om\RedisFormat;
 
 final class RedisClient implements RedisClientInterface
 {
-    public function __construct(protected ?\Redis $redis = null)
+    public function __construct(string $host, int $port, ?string $user = null, ?string $password = null, bool $persistentConnection = false, int $timeout = 0)
     {
-        $redisConfig = [];
+        $redisConfig = [
+            'host' => $host,
+            'port' => $port,
+        ];
 
-        if (array_key_exists('REDIS_HOST', $_SERVER)) {
-            $redisConfig['host'] = $_SERVER['REDIS_HOST'];
+        if ($user && $password) {
+            $redisConfig['auth'] = [$user, $password];
         }
 
-        if (array_key_exists('REDIS_PORT', $_SERVER)) {
-            $redisConfig['port'] = (int) $_SERVER['REDIS_PORT'];
+        $this->redis = new \Redis($redisConfig);
+        if ($persistentConnection) {
+            $this->redis->pconnect($host, $port, $timeout);
         }
-
-        if (array_key_exists('REDIS_USER', $_SERVER) && array_key_exists('REDIS_PASSWORD', $_SERVER)) {
-            $redisConfig['auth'] = [$_SERVER['REDIS_USER'], $_SERVER['REDIS_PASSWORD']];
-        }
-
-        $this->redis = $redis ?? new \Redis($redisConfig !== [] ? $redisConfig : null);
     }
 
     /**

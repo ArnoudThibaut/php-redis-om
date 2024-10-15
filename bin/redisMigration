@@ -1,5 +1,20 @@
 #!/usr/bin/env php
 <?php
+require __DIR__.'/../../../autoload.php';
 
-include(__DIR__ . '/RedisMigration.php');
+use Symfony\Component\Console\Application;
+use Talleu\RedisOm\Client\PredisClient;
+use Talleu\RedisOm\Client\RedisClient;
+use Talleu\RedisOm\Om\RedisObjectManager;
 
+$application = new Application('redis-om-generate-schema');
+
+$manager = new RedisObjectManager(
+    (new \Talleu\RedisOm\Client\ClientFactory())($_SERVER['REDIS_HOST'] ?? 'localhost', $_SERVER['REDIS_PORT'] ?? 6379, $_SERVER['REDIS_USER'] ?? null, $_SERVER['REDIS_PASSWORD'] ?? null, $_SERVER['REDIS_USE_PREDIS'] ?? false, $_SERVER['REDIS_PERSISTENT_CONNECTION'] ?? false, $_SERVER['REDIS_TIMEOUT'] ?? 0)
+);
+$command = new \Talleu\RedisOm\Bundle\Command\GenerateSchemaCommand($manager);
+
+$application->add($command);
+
+$application->setDefaultCommand($command->getName(), true);
+$application->run();

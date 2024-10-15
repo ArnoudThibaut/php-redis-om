@@ -15,27 +15,30 @@ use Talleu\RedisOm\Om\RedisFormat;
 
 final class PredisClient implements RedisClientInterface
 {
-    public function __construct(protected ?Predis $redis = null)
+    public function __construct(string $host, int $port, ?string $user = null, ?string $password = null, bool $persistentConnection = false, int $timeout = 0)
     {
-        $redisConfig = [];
+        $redisConfig = [
+            'host' => $host,
+            'port' => $port,
+        ];
 
-        if (array_key_exists('REDIS_HOST', $_SERVER)) {
-            $redisConfig['host'] = $_SERVER['REDIS_HOST'];
+        if ($user) {
+            $redisConfig['parameters']['username'] = $user;
         }
 
-        if (array_key_exists('REDIS_PORT', $_SERVER)) {
-            $redisConfig['port'] = $_SERVER['REDIS_PORT'];
+        if ($password) {
+            $redisConfig['parameters']['password'] = $password;
         }
 
-        if (array_key_exists('REDIS_USER', $_SERVER)) {
-            $redisConfig['parameters']['username'] = $_SERVER['REDIS_USER'];
+        if ($persistentConnection) {
+            $redisConfig[] = [
+                'persistent' => true,
+                'scheme' => 'tcp',
+                'timeout' => $timeout
+            ];
         }
 
-        if (array_key_exists('REDIS_PASSWORD', $_SERVER)) {
-            $redisConfig['parameters']['password'] = $_SERVER['REDIS_PASSWORD'];
-        }
-
-        $this->redis = $redis ?? new Predis($redisConfig !== [] ? $redisConfig : null);
+        $this->redis = new Predis($redisConfig);
     }
 
     public function createPersistentConnection(?string $host = null, ?int $port = null, ?int $timeout = 0): void
